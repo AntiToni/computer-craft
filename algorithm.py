@@ -1,8 +1,7 @@
 # Map any coordinate to a direction
-# 0 - UP
-# 1 - RIGHT
-# 2 - DOWN
-# 3 - LEFT
+# {'x': 0, 'y': 0, 'z': 0}
+# Where 1 is positive direction, -1 is negative and 0 is no movement in that direction
+# All but 1 direction should be 0
 
 tile_width = 3
 
