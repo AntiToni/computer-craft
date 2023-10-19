@@ -89,10 +89,6 @@ if __name__ == '__main__':
         for j in range(z_size):
             grid[i][j] = map_to_dir(i,y,j,x_size,z_size)
 
-    print(grid)
-
     grid_to_string(grid)
 
     print_grid(grid)
-            
-    # print_grid(grid_to_string(grid))
