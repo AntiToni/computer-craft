@@ -70,30 +70,30 @@ function move_and_mine(move_dir)
     repeat
       has_block, data = turtle.inspectUp()
 
-      if has_block and ~BLOCK_BLACKLIST[data.name] then
-        if ~turtle.digUp() then
+      if has_block and not BLOCK_BLACKLIST[data.name] then
+        if not turtle.digUp() then
           return false
         end
       end
 
       -- Handle events before sleeping
       sleep(0)
-    until ~turtle.detectUp()
+    until not turtle.detectUp()
     turtle.up()
   elseif move_dir == 'D' then
     -- Check block isn't in blacklist, then try mining and check if it worked
     repeat
       has_block, data = turtle.inspectDown()
 
-      if has_block and ~BLOCK_BLACKLIST[data.name] then
-        if ~turtle.digDown() then
+      if has_block and not BLOCK_BLACKLIST[data.name] then
+        if not turtle.digDown() then
           return false
         end
       end
 
       -- Handle events before sleeping
       sleep(0)
-    until ~turtle.detectDown()
+    until not turtle.detectDown()
     turtle.down()
   else
     turn_to_dir(DIR[move_dir])
@@ -102,15 +102,15 @@ function move_and_mine(move_dir)
     repeat
       has_block, data = turtle.inspect()
 
-      if has_block and ~BLOCK_BLACKLIST[data.name] then
-        if ~turtle.dig() then
+      if has_block and not BLOCK_BLACKLIST[data.name] then
+        if not turtle.dig() then
           return false
         end
       end
 
       -- Handle events before sleeping
       sleep(0)
-    until ~turtle.detect()
+    until not turtle.detect()
     turtle.forward()
   end
 
