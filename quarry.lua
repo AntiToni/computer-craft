@@ -155,11 +155,11 @@ end
 
 -- Main Program
 for i = 1, 10, 1 do
-  move_and_mine(DIR['E'])
+  move_and_mine('E')
 end
  
 for i = 1, 10, 1 do
-  move_and_mine(DIR['W'])
+  move_and_mine('W')
 end
  
 turn_to_dir(DIR['E'])
