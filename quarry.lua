@@ -1,3 +1,16 @@
+-- Global constants
+DIR = {
+  E = vector.new(1,0,0), S = vector.new(0,0,1), 
+  W = vector.new(-1,0,0), N = vector.new(0,0,-1), 
+  U = vector.new(0,1,0), D = vector.new(0,-1,0)
+}
+
+BLOCK_BLACKLIST = {
+  ["computercraft:turtle_normal"] = true,
+  ["computercraft:turtle_advanced"] = true,
+  ["minecraft:chest"] = true
+}
+
 -- Parse commandline arguments
 args = {...}
 if #args ~= 2 then
@@ -49,7 +62,59 @@ function read_vector(handle)
 end
 
 function move_and_mine(move_dir)
+  local has_block = true
+  local data = nil
 
+  if move_dir == 'U' then
+    -- Check block isn't in blacklist, then try mining and check if it worked
+    repeat
+      has_block, data = turtle.inspectUp()
+
+      if has_block and ~BLOCK_BLACKLIST[data.name] then
+        if ~turtle.digUp() then
+          return false
+        end
+      end
+
+      -- Handle events before sleeping
+      sleep(0)
+    until ~turtle.detectUp()
+    turtle.up()
+  elseif move_dir == 'D' then
+    -- Check block isn't in blacklist, then try mining and check if it worked
+    repeat
+      has_block, data = turtle.inspectDown()
+
+      if has_block and ~BLOCK_BLACKLIST[data.name] then
+        if ~turtle.digDown() then
+          return false
+        end
+      end
+
+      -- Handle events before sleeping
+      sleep(0)
+    until ~turtle.detectDown()
+    turtle.down()
+  else
+    turn_to_dir(DIR[move_dir])
+    
+    -- Check block isn't in blacklist, then try mining and check if it worked
+    repeat
+      has_block, data = turtle.inspect()
+
+      if has_block and ~BLOCK_BLACKLIST[data.name] then
+        if ~turtle.dig() then
+          return false
+        end
+      end
+
+      -- Handle events before sleeping
+      sleep(0)
+    until ~turtle.detect()
+    turtle.forward()
+  end
+
+  return true
 end
 
 function turn_to_dir(target_dir)
@@ -85,7 +150,16 @@ function turn_to_dir(target_dir)
 end
 
 function map_to_dir(x, y, z, x_size, z_size)
-  
+  return nil
 end
 
 -- Main Program
+for i = 1, 10, 1 do
+  move_and_mine(DIR['E'])
+end
+ 
+for i = 1, 10, 1 do
+  move_and_mine(DIR['W'])
+end
+ 
+turn_to_dir(DIR['E'])
