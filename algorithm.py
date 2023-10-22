@@ -45,7 +45,7 @@ def map_to_dir(x,y,z,x_size,z_size,eff_mode):
         if x == 1 and z == 1:
             dir = {'x': 0, 'y': -1, 'z': 0}
     elif z == z_size and (z_size_even and x == 1 or not z_size_even and x == x_size):
-            dir = {'x': 0, 'y': -1, 'z': 0}
+        dir = {'x': 0, 'y': -1, 'z': 0}
 
     return dir
 
