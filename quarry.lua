@@ -57,8 +57,14 @@ else
   progress_coord = vector.new(0,0,0)      -- Max progress turtle has made in shaft
   curr_coord = vector.new(0,0,0)          -- Current location of turtle
 
-  eff_mode = false          -- If quarry should be in efficient mode (less movement and fuel used)
+  eff_mode = true          -- If quarry should be in efficient mode (less movement and fuel used)
   hit_bedrock = false      -- If the turtle has finished it's mining operation
+
+  for key, value in pairs(args) do
+    if value == '-e' then
+      eff_mode = false
+    end
+  end
 
   -- Direction it starts facing will be treated as +x
   curr_dir = vector.new(1,0,0)
@@ -103,12 +109,6 @@ end
 function turn_to_dir(target_dir)
   local turn = 0
   local product = vector.new(curr_dir.x * target_dir.x, curr_dir.y * target_dir.y, curr_dir.z * target_dir.z)
-  print('CURR')
-  print(curr_dir)
-  print('TARGET')
-  print(target_dir)
-  print('DOT')
-  print(product)
 
   -- Check if in correct rotation already
   if (curr_dir.x ~= target_dir.x) or (curr_dir.z ~= target_dir.z) then
@@ -123,8 +123,6 @@ function turn_to_dir(target_dir)
       turn = swap_product.x - swap_product.z
     end
   end
-
-  print(turn)
 
   -- Make turns
   while turn > 0 do
@@ -199,20 +197,29 @@ end
 
 -- Try to move forward (and update coords)
 function move_forward()
-  curr_coord = curr_coord + curr_dir
-  turtle.forward()
+  if turtle.forward() then
+    curr_coord = curr_coord + curr_dir
+    return true
+  end
+    return false
 end
 
 -- Try to move up (and update coords)
 function move_up()
-  curr_coord = curr_coord + DIR['U']
-  turtle.up()
+  if turtle.up() then
+    curr_coord = curr_coord + DIR['U']
+    return true
+  end
+    return false
 end
 
 -- Try to move down (and update coords)
 function move_down()
-  curr_coord = curr_coord + DIR['D']
-  turtle.down()
+  if turtle.down() then
+    curr_coord = curr_coord + DIR['D']
+    return true
+  end
+    return false
 end
 
 -- Attempt to mine and move to target_coord
@@ -295,23 +302,29 @@ end
 -- Main function for digging shaft
 function dig_shaft()
   -- Continue digging until hit_bedrock
-  repeat
-    hit_bedrock = not move_and_mine(map_to_dir(curr_coord,x_size,z_size))
-  until hit_bedrock
+  while not hit_bedrock do
+    hit_bedrock = hit_bedrock or not move_and_mine(map_to_dir(curr_coord,x_size,z_size))
 
-  -- When you hit bedrock, move back to previous position
-  -- This prevents getting stuck under bedrock
-  turn_to_dir(vector.new(-1*curr_dir.x,curr_dir.y,-1*curr_dir.z))
-  move_forward()
+    if eff_mode then
+      if not mine_up() then
+        hit_bedrock = true
+        -- When you hit bedrock, move back to previous position
+        -- This prevents getting stuck under bedrock
+        turn_to_dir(vector.new(-1*curr_dir.x,curr_dir.y,-1*curr_dir.z))
+        move_forward()
+      end
+
+      hit_bedrock = hit_bedrock or not mine_down()
+    end
+  end
 
   -- Move up 2 to clear bedrock
   move_up()
   move_up()
+
+  move_to_coord(shaft_coord)
 end
 
 -- Main Program
--- for i = 1, 10, 1 do
---   move_and_mine(map_to_dir(curr_coord,x_size,z_size))
--- end
-
-move_to_coord(vector.new(3,5,3))
+dig_shaft()
+turn_to_dir(DIR['E'])
