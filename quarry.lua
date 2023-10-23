@@ -73,56 +73,26 @@ function read_vector(handle)
 end
 
 -- Turn to target_dir, mine and then move there
+-- Returns true if success
 function move_and_mine(target_dir)
-  local has_block = true
-  local data = nil
-
   if target_dir == vector.new(0,1,0) then
-    -- Check block isn't in blacklist, then try mining and check if it worked
-    repeat
-      has_block, data = turtle.inspectUp()
-
-      if has_block and not BLOCK_BLACKLIST[data.name] then
-        if not turtle.digUp() then
-          return false
-        end
-      end
-
-      -- Handle events before sleeping
-      sleep(0)
-    until not turtle.detectUp()
+    if not mine_up() then
+      -- If cannot mine block, return error
+      return false
+    end
     move_up()
   elseif target_dir == vector.new(0,-1,0) then
-    -- Check block isn't in blacklist, then try mining and check if it worked
-    repeat
-      has_block, data = turtle.inspectDown()
-
-      if has_block and not BLOCK_BLACKLIST[data.name] then
-        if not turtle.digDown() then
-          return false
-        end
-      end
-
-      -- Handle events before sleeping
-      sleep(0)
-    until not turtle.detectDown()
+    if not mine_down() then
+      -- If cannot mine block, return error
+      return false
+    end
     move_down()
   else
     turn_to_dir(target_dir)
-    
-    -- Check block isn't in blacklist, then try mining and check if it worked
-    repeat
-      has_block, data = turtle.inspect()
-
-      if has_block and not BLOCK_BLACKLIST[data.name] then
-        if not turtle.dig() then
-          return false
-        end
-      end
-
-      -- Handle events before sleeping
-      sleep(0)
-    until not turtle.detect()
+    if not mine_forward() then
+      -- If cannot mine block, return error
+      return false
+    end
     move_forward()
   end
 
@@ -170,6 +140,63 @@ function turn_to_dir(target_dir)
   curr_dir = vector.new(target_dir.x, 0, target_dir.z)
 end
 
+-- Try mining forwards, return true if success
+function mine_forward()
+  -- Check block isn't in blacklist, then try mining and check if it worked
+  repeat
+    local has_block, data = turtle.inspect()
+
+    if has_block and not BLOCK_BLACKLIST[data.name] then
+      if not turtle.dig() then
+        return false
+      end
+    end
+
+    -- Handle events before sleeping
+    sleep(0)
+  until not turtle.detect()
+
+  return true
+end
+
+-- Try mining upwards, return true if success
+function mine_up()
+  -- Check block isn't in blacklist, then try mining and check if it worked
+  repeat
+    local has_block, data = turtle.inspectUp()
+
+    if has_block and not BLOCK_BLACKLIST[data.name] then
+      if not turtle.digUp() then
+        return false
+      end
+    end
+
+    -- Handle events before sleeping
+    sleep(0)
+  until not turtle.detectUp()
+
+  return true
+end
+
+-- Try mining downwards, return true if success
+function mine_down()
+  -- Check block isn't in blacklist, then try mining and check if it worked
+  repeat
+    local has_block, data = turtle.inspectDown()
+
+    if has_block and not BLOCK_BLACKLIST[data.name] then
+      if not turtle.digDown() then
+        return false
+      end
+    end
+
+    -- Handle events before sleeping
+    sleep(0)
+  until not turtle.detectDown()
+
+  return true
+end
+
 -- Try to move forward (and update coords)
 function move_forward()
   curr_coord = curr_coord + curr_dir
@@ -186,6 +213,35 @@ end
 function move_down()
   curr_coord = curr_coord + DIR['D']
   turtle.down()
+end
+
+-- Attempt to mine and move to target_coord
+-- Return true if success, false if hit unbreakable block
+function move_to_coord(target_coord)
+  local diff_vector = target_coord:sub(curr_coord)
+  local x_dir = diff_vector.x > 0 and vector.new(1,0,0) or vector.new(-1,0,0)
+  local y_dir = diff_vector.y > 0 and vector.new(0,1,0) or vector.new(0,-1,0)
+  local z_dir = diff_vector.z > 0 and vector.new(0,0,1) or vector.new(0,0,-1)
+
+  for i = 1, math.abs(diff_vector.x), 1 do
+    if not move_and_mine(x_dir) then
+      return false
+    end
+  end
+
+  for i = 1, math.abs(diff_vector.z), 1 do
+    if not move_and_mine(z_dir) then
+      return false
+    end
+  end
+
+  for i = 1, math.abs(diff_vector.y), 1 do
+    if not move_and_mine(y_dir) then
+      return false
+    end
+  end
+
+  return true
 end
 
 -- Maps each position in the shaft to the direction the turtle should move next
@@ -236,7 +292,26 @@ function map_to_dir(coord, x_size, z_size)
   return dir
 end
 
--- Main Program
-for i = 1, 10, 1 do
-  move_and_mine(map_to_dir(curr_coord,x_size,z_size))
+-- Main function for digging shaft
+function dig_shaft()
+  -- Continue digging until hit_bedrock
+  repeat
+    hit_bedrock = not move_and_mine(map_to_dir(curr_coord,x_size,z_size))
+  until hit_bedrock
+
+  -- When you hit bedrock, move back to previous position
+  -- This prevents getting stuck under bedrock
+  turn_to_dir(vector.new(-1*curr_dir.x,curr_dir.y,-1*curr_dir.z))
+  move_forward()
+
+  -- Move up 2 to clear bedrock
+  move_up()
+  move_up()
 end
+
+-- Main Program
+-- for i = 1, 10, 1 do
+--   move_and_mine(map_to_dir(curr_coord,x_size,z_size))
+-- end
+
+move_to_coord(vector.new(3,5,3))
