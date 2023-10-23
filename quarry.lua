@@ -13,7 +13,7 @@ BLOCK_BLACKLIST = {
 
 -- Parse commandline arguments
 args = {...}
-if #args ~= 2 then
+if #args < 2 then
   if #args == 0 then
     -- If no args then read from file
     local log_file = fs.open("quarry.log", "r")
@@ -64,6 +64,7 @@ else
   curr_dir = vector.new(1,0,0)
 end
 
+-- Reads a vector from the handle (x,y,z on seperate lines)
 function read_vector(handle)
   local x = tonumber(handle.readLine())
   local y = tonumber(handle.readLine())
@@ -71,11 +72,12 @@ function read_vector(handle)
   return vector.new(x,y,z)
 end
 
-function move_and_mine(move_dir)
+-- Turn to target_dir, mine and then move there
+function move_and_mine(target_dir)
   local has_block = true
   local data = nil
 
-  if move_dir == vector.new(0,1,0) then
+  if target_dir == vector.new(0,1,0) then
     -- Check block isn't in blacklist, then try mining and check if it worked
     repeat
       has_block, data = turtle.inspectUp()
@@ -90,7 +92,7 @@ function move_and_mine(move_dir)
       sleep(0)
     until not turtle.detectUp()
     move_up()
-  elseif move_dir == vector.new(0,-1,0) then
+  elseif target_dir == vector.new(0,-1,0) then
     -- Check block isn't in blacklist, then try mining and check if it worked
     repeat
       has_block, data = turtle.inspectDown()
@@ -106,7 +108,7 @@ function move_and_mine(move_dir)
     until not turtle.detectDown()
     move_down()
   else
-    turn_to_dir(move_dir)
+    turn_to_dir(target_dir)
     
     -- Check block isn't in blacklist, then try mining and check if it worked
     repeat
@@ -127,6 +129,7 @@ function move_and_mine(move_dir)
   return true
 end
 
+-- Turn to the target_dir
 function turn_to_dir(target_dir)
   local turn = 0
   local product = vector.new(curr_dir.x * target_dir.x, curr_dir.y * target_dir.y, curr_dir.z * target_dir.z)
@@ -167,21 +170,26 @@ function turn_to_dir(target_dir)
   curr_dir = vector.new(target_dir.x, 0, target_dir.z)
 end
 
+-- Try to move forward (and update coords)
 function move_forward()
   curr_coord = curr_coord + curr_dir
   turtle.forward()
 end
 
+-- Try to move up (and update coords)
 function move_up()
   curr_coord = curr_coord + DIR['U']
   turtle.up()
 end
 
+-- Try to move down (and update coords)
 function move_down()
   curr_coord = curr_coord + DIR['D']
   turtle.down()
 end
 
+-- Maps each position in the shaft to the direction the turtle should move next
+-- If turtle in efficient mode changes mapping to every 3rd line
 function map_to_dir(coord, x_size, z_size)
   local x = coord.x + 1
   local z = coord.z + 1

@@ -30,6 +30,7 @@ def turn_to_dir(curr, target):
 
     return turn
 
+# Pretend that Im not a dumbass thx
 def dot_product(a, b):
     c = []
     for i in range(len(a)):
