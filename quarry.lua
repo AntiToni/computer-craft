@@ -16,8 +16,8 @@ args = {...}
 if #args < 2 then
   if #args == 0 then
     -- If no args then read from file
-    local log_file = fs.open("quarry.log", "r")
-    local line = log_file.readLine()
+    local save_file = fs.open("quarry.save", "r")
+    local line = save_file.readLine()
 
     -- Check if file is a real save
     if line ~= 'SAVE' then
@@ -25,23 +25,23 @@ if #args < 2 then
     end
 
     -- Read parameters of quarry size
-    x_size = log_file.readLine()
-    z_size = log_file.readLine()
+    x_size = save_file.readLine()
+    z_size = save_file.readLine()
 
     -- Read coordinates
-    origin_coord = read_vector(log_file)
-    shaft_coord = read_vector(log_file)
-    progress_coord = read_vector(log_file)
-    curr_coord = read_vector(log_file)
+    origin_coord = read_vector(save_file)
+    shaft_coord = read_vector(save_file)
+    progress_coord = read_vector(save_file)
+    curr_coord = read_vector(save_file)
 
     -- Load booleans
     stringtoboolean={ ["true"]=true, ["false"]=false }
-    eff_mode = stringtoboolean[log_file.readLine()]
-    hit_bedrock = stringtoboolean[log_file.readLine()]
+    eff_mode = stringtoboolean[save_file.readLine()]
+    hit_bedrock = stringtoboolean[save_file.readLine()]
 
     -- Read current direction
-    local x_dir = tonumber(log_file.readLine())
-    local z_dir = tonumber(log_file.readLine())
+    local x_dir = tonumber(save_file.readLine())
+    local z_dir = tonumber(save_file.readLine())
     curr_dir = vector.new(x_dir,0,z_dir)
   else
     error('Incorrect number of arguments.', 0)
@@ -70,12 +70,45 @@ else
   curr_dir = vector.new(1,0,0)
 end
 
+-- Saves all current information to quarry.save
+function save_to_file()
+  local save_file = fs.open("quarry.save", "w")
+
+  -- Write SAVE to show is real save
+  save_file.writeLine('SAVE')
+
+  -- Write parameters of quarry size
+  save_file.writeLine(x_size)
+  save_file.writeLine(z_size)
+
+  -- Write coordinates
+  write_vector(save_file, origin_coord)
+  write_vector(save_file, shaft_coord)
+  write_vector(save_file, progress_coord)
+  write_vector(save_file, curr_coord)
+
+  -- Write booleans
+  save_file.writeLine(tostring(eff_mode))
+  save_file.writeLine(tostring(hit_bedrock))
+
+  -- Write current direction
+  save_file.writeLine(curr_dir.x)
+  save_file.writeLine(curr_dir.z)
+end
+
 -- Reads a vector from the handle (x,y,z on seperate lines)
 function read_vector(handle)
   local x = tonumber(handle.readLine())
   local y = tonumber(handle.readLine())
   local z = tonumber(handle.readLine())
   return vector.new(x,y,z)
+end
+
+-- Writes a vector to the handle (x,y,z on seperate lines)
+function write_vector(handle, vec)
+  handle.writeLine(vec.x)
+  handle.writeLine(vec.y)
+  handle.writeLine(vec.z)
 end
 
 -- Turn to target_dir, mine and then move there
@@ -136,6 +169,9 @@ function turn_to_dir(target_dir)
 
   -- Update current direction
   curr_dir = vector.new(target_dir.x, 0, target_dir.z)
+
+  -- Save state
+  save_to_file()
 end
 
 -- Try mining forwards, return true if success
@@ -199,6 +235,7 @@ end
 function move_forward()
   if turtle.forward() then
     curr_coord = curr_coord + curr_dir
+    save_to_file()
     return true
   end
     return false
@@ -208,6 +245,7 @@ end
 function move_up()
   if turtle.up() then
     curr_coord = curr_coord + DIR['U']
+    save_to_file()
     return true
   end
     return false
@@ -217,6 +255,7 @@ end
 function move_down()
   if turtle.down() then
     curr_coord = curr_coord + DIR['D']
+    save_to_file()
     return true
   end
     return false
